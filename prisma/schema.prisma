@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  name         String
+  email        String     @unique
+  password     String
+  role         Role       @default(CLIENT)
+  favorite     Barber?    @relation("FavoriteBarber", fields: [favoriteId], references: [id])
+  favoriteId   String?
+  appointments Appointment[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Barber {
+  id             String          @id @default(uuid())
+  name           String
+  availableSlots AvailableSlot[]
+  appointments   Appointment[]
+  favoritedBy    User[]          @relation("FavoriteBarber")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model AvailableSlot {
+  id        String   @id @default(uuid())
+  barber    Barber   @relation(fields: [barberId], references: [id])
+  barberId  String
+  date      DateTime
+  isBooked  Boolean  @default(false)
+  appointment Appointment? 
+  createdAt DateTime @default(now())
+}
+
+model Appointment {
+  id           String         @id @default(uuid())
+  user         User           @relation(fields: [userId], references: [id])
+  userId       String
+  barber       Barber         @relation(fields: [barberId], references: [id])
+  barberId     String
+  slot         AvailableSlot  @relation(fields: [slotId], references: [id])
+  slotId       String         @unique
+  service      String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
